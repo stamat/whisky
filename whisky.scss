@@ -1,0 +1,180 @@
+/*
+ * Whisky 1.0.0
+ *
+ * Yo, I don't use all Bourbon.io mixins, and I am bored to include the whole
+ * Burbon.io -  so there you go. I have wrote few mixins that I use in every
+ * project, and I have simplified the Neat 3.0.0 excluding grid media which I
+ * found redundant - It's easier just to use @include media. Also I removed
+ * all usage of map SASS function cause it wouldn't compile everywhere - Shopify
+ * I'm looking at you.
+ *
+ * Anyway that's about it! Love <3, Stamat
+ */
+
+//Simplified NEAT 3.0.0 - cause it wouldn't compile on Shopify
+
+@function _neat-column-width($columns) {
+  $_column-ratio: _neat-column-ratio($columns);
+  $_gutter: $grid_gutter;
+
+  @if $_gutter == 0 {
+    @return unquote("#{percentage($_column-ratio)}");
+  } @else {
+    $_gutter-affordance: $_gutter + ($_gutter * $_column-ratio);
+    @return unquote("#{percentage($_column-ratio)} - #{$_gutter-affordance}");
+  }
+}
+
+@function _neat-column-ratio($columns) {
+  @if length($columns) > 1 {
+    @return nth($columns, 1) / _neat-parse-columns($columns);
+  } @else if $columns {
+    @return $columns / $grid_columns;
+  }
+}
+
+@function _neat-float-direction() {
+  $_direction: $grid_float;
+  $_float-direction: null;
+  @if $_direction == "ltr" {
+      $_float-direction: left;
+  } @else if $_direction == "rtl" {
+    $_float-direction: right;
+  }
+  @return $_float-direction;
+}
+
+@function _neat-opposite-direction() {
+  $_direction: $grid_float;
+  $_float-direction: null;
+  @if $_direction == "ltr" {
+      $_float-direction: right;
+  } @else if $_direction == "rtl" {
+    $_float-direction: left;
+  }
+  @return $_float-direction;
+}
+
+@function _neat-parse-columns($span) {
+  @if length($span) == 3 {
+    $_total-columns: nth($span, 3);
+    @return $_total-columns;
+  }
+}
+
+@mixin grid-collapse() {
+  $_grid-gutter: $grid_gutter;
+
+  margin-#{_neat-float-direction()}: -($_grid-gutter);
+  margin-#{_neat-opposite-direction()}: -($_grid-gutter);
+  width: calc(100% + #{($_grid-gutter * 2)});
+}
+
+@mixin grid-column($columns: null) {
+  $_grid-columns: $grid_columns;
+  $_grid-gutter: $grid_gutter;
+
+  width: calc(#{_neat-column-width($columns)});
+  float: _neat-float-direction();
+  margin-#{_neat-float-direction()}: $_grid-gutter;
+}
+
+@mixin grid-container() {
+  &::after {
+    clear: both;
+    content: "";
+    display: block;
+  }
+}
+
+@mixin grid-push($push: false) {
+    $_grid-columns: $grid_columns;
+    $_grid-gutter: $grid_gutter;
+
+  @if $push {
+    $_gutter-affordance: $_grid-gutter * 2;
+    $_margin-value: calc(#{_neat-column-width($push)} + #{$_gutter-affordance});
+    margin-#{_neat-float-direction()}: $_margin-value;
+  } @else {
+    $_margin-value: $grid_gutter;
+    margin-#{_neat-float-direction()}: $_margin-value;
+  }
+}
+
+@mixin grid-shift($shift: false) {
+  @if $shift {
+    $_shift-value: calc(#{_neat-column-width($shift)} + #{$grid_gutter});
+    #{_neat-float-direction()}: $_shift-value;
+  } @else {
+    #{_neat-float-direction()}: auto;
+  }
+
+  position: relative;
+}
+
+// UTILS
+
+@mixin retina ($filename, $size, $ext: png) {
+    background-image: url("#{$image_dir}#{$filename}.#{$ext}");
+    background-size: $size;
+
+    @media only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen and (min--moz-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 1.3 / 1), only screen and (min-resolution: 125dpi), only screen and (min-resolution: 1.3dppx) {
+        background-image: url("#{$image_dir}#{$filename}@2x.#{$ext}");
+    }
+}
+
+@mixin bg ($filename, $ext: png) {
+    background-image: url("#{$image_dir}#{$filename}.#{$ext}");
+}
+
+@mixin icon ($filename, $w, $h, $ext: png) {
+    background-image: url("#{$image_dir}#{$filename}.#{$ext}");
+    background-size: $w $h;
+    background-position: center center;
+    background-repeat: no-repeat;
+    display: inline-block;
+    width: $w;
+    height: $h;
+    line-height: $h;
+    vertical-align: middle;
+    margin-top: -3px;
+
+    @media only screen and (-webkit-min-device-pixel-ratio: 1.3), only screen and (min--moz-device-pixel-ratio: 1.3), only screen and (-o-min-device-pixel-ratio: 1.3 / 1), only screen and (min-resolution: 125dpi), only screen and (min-resolution: 1.3dppx) {
+        background-image: url("#{$image_dir}#{$filename}@2x.#{$ext}");
+    }
+}
+
+@mixin clearfix {
+  &::after {
+    clear: both;
+    content: "";
+    display: table;
+  }
+}
+
+@mixin media($query) {
+    @media screen and ($query) {
+      @content;
+    }
+}
+
+@function new-breakpoint($query: $feature $value) {
+  @if length($query) == 1 {
+    $v: nth($query, 1);
+    $query: "min-width: #{$v}";
+  } @else {
+    $f: nth($query, 1);
+    $v: nth($query, 2);
+    $query: "#{$f}: #{$v}";
+  }
+
+  @return $query;
+}
+
+//GRID DEFAULTS
+$grid_columns: 12;
+$grid_gutter: 16px;
+$grid_float: 'ltr';
+
+//Image directory default - change it to wherever you store images relative to the compiled .css
+$image_dir: '';
